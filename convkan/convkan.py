@@ -63,8 +63,8 @@ class ConvKAN(torch.nn.Module):
         output = self.kan_layer(x_unf)
 
         # Calculate output dimensions
-        output_height = (height + 2 * self.padding - self.kernel_size) // self.stride + 1
-        output_width = (width + 2 * self.padding - self.kernel_size) // self.stride + 1
+        output_height = (height + 2 * self.padding - self.kernel_size[0]) // self.stride + 1
+        output_width = (width + 2 * self.padding - self.kernel_size[1]) // self.stride + 1
 
         # Reshape output to image format
         output = output.view(batch_size, -1, output_height, output_width)
