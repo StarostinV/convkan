@@ -6,7 +6,7 @@ The KAN implementation is taken from the https://github.com/Blealtan/efficient-k
 
 ## Usage
 
-Training a simple model on MNIST (97% accuracy after the first epoch):
+Training a simple model on MNIST (96% accuracy after the first epoch):
 
 ```python
 
@@ -19,9 +19,9 @@ from convkan import ConvKAN, LayerNorm2D
 
 # Define the model
 model = nn.Sequential(
-    ConvKAN(1, 32, padding=1, kernel_size=3, stride=2),
+    ConvKAN(1, 32, padding=1, kernel_size=3, stride=1),
     LayerNorm2D(32),
-    ConvKAN(32, 32, padding=1, kernel_size=3, stride=1),
+    ConvKAN(32, 32, padding=1, kernel_size=3, stride=2),
     LayerNorm2D(32),
     ConvKAN(32, 10, padding=1, kernel_size=3, stride=2),
     nn.AdaptiveAvgPool2d(1),
@@ -42,28 +42,32 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=
 
 # Define the loss function and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2)
 
 # Train the model
 model.train()
-for i, (x, y) in enumerate(train_loader):
+
+pbar = tqdm(train_loader)
+for i, (x, y) in enumerate(pbar):
     x, y = x.cuda(), y.cuda()
     optimizer.zero_grad()
     y_hat = model(x)
     loss = criterion(y_hat, y)
     loss.backward()
     optimizer.step()
+    pbar.set_description(f'Loss: {loss.item():.2e}')
 
 model.eval()
 correct = 0
 total = 0
 
 with torch.no_grad():
-    for x, y in test_loader:
+    pbar = tqdm(test_loader)
+    for x, y in pbar:
         x, y = x.cuda(), y.cuda()
         y_hat = model(x)
         _, predicted = torch.max(y_hat, 1)
         total += y.size(0)
         correct += (predicted == y).sum().item()
-
+        pbar.set_description(f'Accuracy: {100 * correct / total:.2f}%')
 ```
