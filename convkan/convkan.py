@@ -6,8 +6,8 @@ from convkan.kanlinear import KANLinear
 
 class ConvKAN(torch.nn.Module):
     def __init__(self,
-                 in_dim: int,
-                 out_dim: int,
+                 in_channels: int,
+                 out_channels: int,
                  kernel_size: int or tuple = 3,
                  stride: int = 1,
                  padding: int = 0,
@@ -26,8 +26,8 @@ class ConvKAN(torch.nn.Module):
         Convolutional layer with KAN kernels.
 
         Args:
-            in_dim (int): Number of channels in the input image
-            out_dim (int): Number of channels produced by the convolution
+            in_channels (int): Number of channels in the input image
+            out_channels (int): Number of channels produced by the convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int): Stride of the convolution. Default: 1
             padding (int): Zero-padding added to both sides of the input. Default: 0
@@ -43,8 +43,8 @@ class ConvKAN(torch.nn.Module):
             grid_range (tuple): Range of the grid. Default: (-1, 1).
         """
         super().__init__()
-        self.input_channels = in_dim
-        self.output_channels = out_dim
+        self.in_channels = in_channels
+        self.out_channels = out_channels
 
         if isinstance(kernel_size, int):
             kernel_size = (kernel_size, kernel_size)
@@ -55,8 +55,8 @@ class ConvKAN(torch.nn.Module):
         self.dilation = dilation
 
         self.kan_layer = KANLinear(
-            in_dim * kernel_size[0] * kernel_size[1],
-            out_dim,
+            in_channels * kernel_size[0] * kernel_size[1],
+            out_channels,
             grid_size=grid_size,
             spline_order=spline_order,
             scale_noise=scale_noise,
@@ -80,7 +80,7 @@ class ConvKAN(torch.nn.Module):
 
         # Reshape for passing to the module
         x_unf = x_unf.transpose(1, 2).contiguous().view(
-            -1, self.input_channels * self.kernel_size[0] * self.kernel_size[1]
+            -1, self.in_channels * self.kernel_size[0] * self.kernel_size[1]
         )
 
         # Pass through the KAN layer
