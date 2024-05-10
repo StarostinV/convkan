@@ -18,10 +18,30 @@ class ConvKAN(torch.nn.Module):
                  scale_base: float = 1.0,
                  scale_spline: float = 1.0,
                  enable_standalone_scale_spline: bool = True,
-                 base_activation=torch.nn.SiLU,
+                 base_activation: torch.nn.Module = torch.nn.SiLU,
                  grid_eps: float = 0.02,
                  grid_range: tuple = (-1, 1),
                  ):
+        """
+        Convolutional layer with KAN kernels.
+
+        Args:
+            in_dim (int): Number of channels in the input image
+            out_dim (int): Number of channels produced by the convolution
+            kernel_size (int or tuple): Size of the convolving kernel
+            stride (int): Stride of the convolution. Default: 1
+            padding (int): Zero-padding added to both sides of the input. Default: 0
+            dilation (int): Spacing between kernel elements. Default: 1
+            grid_size (int): Number of grid points for the spline. Default: 5
+            spline_order (int): Order of the spline. Default: 3
+            scale_noise (float): Scale of the noise. Default: 0.1
+            scale_base (float): Scale of the base. Default: 1.0
+            scale_spline (float): Scale of the spline. Default: 1.0
+            enable_standalone_scale_spline (bool): Enable standalone scale for the spline. Default: True
+            base_activation (torch.nn.Module): Activation function for the base. Default: torch.nn.SiLU
+            grid_eps (float): Epsilon for the grid
+            grid_range (tuple): Range of the grid. Default: (-1, 1).
+        """
         super().__init__()
         self.input_channels = in_dim
         self.output_channels = out_dim
