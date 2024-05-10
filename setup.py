@@ -18,7 +18,7 @@ install_requires = read_file('requirements.txt').splitlines()
 setup(
     name=PACKAGE_NAME,
     packages=find_packages(),
-    version='0.0.1.1',
+    version='0.0.1.2',
     author='Vladimir Starostin',
     author_email='vladimir.starostin@uni-tuebingen.de',
     license='MIT',
