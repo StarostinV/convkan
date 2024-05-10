@@ -10,6 +10,14 @@ The KAN implementation is taken from the https://github.com/Blealtan/efficient-k
 
 ## Installation
 
+From PyPI:
+
+```bash
+pip install convkan
+```
+
+From source:
+
 ```bash
 git clone git@github.com:StarostinV/convkan.git
 cd convkan
