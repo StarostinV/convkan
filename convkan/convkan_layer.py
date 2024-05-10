@@ -112,7 +112,7 @@ class ConvKAN(torch.nn.Module):
             self.groups,  # number of groups
             self._in_dim,
             # channels per group * kernel elements
-            -1  # number of sliding window positions
+            -1,  # number of sliding window positions
         )
 
         # Reshape for KANLinear which expects (batch_size * num_windows, features)
@@ -122,21 +122,28 @@ class ConvKAN(torch.nn.Module):
 
         # Compute output dimensions
         output_height = (
-                                x.shape[2] + 2 * padding[0] - self.dilation[0] * (self.kernel_size[0] - 1) - 1
-                        ) // self.stride[0] + 1
+            x.shape[2]
+            + 2 * padding[0]
+            - self.dilation[0] * (self.kernel_size[0] - 1)
+            - 1
+        ) // self.stride[0] + 1
         output_width = (
-                               x.shape[3] + 2 * padding[1] - self.dilation[1] * (self.kernel_size[1] - 1) - 1
-                       ) // self.stride[1] + 1
+            x.shape[3]
+            + 2 * padding[1]
+            - self.dilation[1] * (self.kernel_size[1] - 1)
+            - 1
+        ) // self.stride[1] + 1
 
         # Reshape output to the expected output format
         output = output.view(
             x.shape[0],  # batch size
             self.out_channels,  # total output channels
             output_height,
-            output_width
+            output_width,
         )
 
         return output
+
 
 def _pair(x):
     if isinstance(x, (int, float)):

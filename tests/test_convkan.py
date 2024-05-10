@@ -73,8 +73,10 @@ def test_padding_modes(sample_input, padding_mode):
         out_channels,
         expected_height,
         expected_width,
-    ), (f"Output shape is incorrect for padding mode {padding_mode}. "
-        f"Expected ({sample_input.shape[0], out_channels, expected_height, expected_width}), got {output.shape}")
+    ), (
+        f"Output shape is incorrect for padding mode {padding_mode}. "
+        f"Expected ({sample_input.shape[0], out_channels, expected_height, expected_width}), got {output.shape}"
+    )
 
 
 @pytest.mark.parametrize(
