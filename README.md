@@ -2,6 +2,10 @@
 
 ## Implementation of the Convolutional Kolmogorov-Arnold Network layer in PyTorch.
 
+A drop-in replacement for the torch.nn.Conv2d layer that uses the Kolmogorov-Arnold Network (KAN) instead of the standard convolution.
+
+Currently, supports grouped convolution, padding with different modes, dilation, and stride. 
+
 The KAN implementation is taken from the https://github.com/Blealtan/efficient-kan/ repository.
 
 ## Installation
