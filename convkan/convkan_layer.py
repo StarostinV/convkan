@@ -1,7 +1,6 @@
-import warnings
-
 import torch
-from torch.nn import functional as F
+import torch.nn.functional as F
+import warnings
 
 from convkan.kanlinear import KANLinear
 
@@ -12,9 +11,9 @@ class ConvKAN(torch.nn.Module):
         in_channels: int,
         out_channels: int,
         kernel_size: int or tuple = 3,
-        stride: int = 1,
-        padding: int = 0,
-        dilation: int = 1,
+        stride: int or tuple = 1,
+        padding: int or tuple = 0,
+        dilation: int or tuple = 1,
         groups: int = 1,
         padding_mode: str = "zeros",
         bias: bool = True,
@@ -89,6 +88,7 @@ class ConvKAN(torch.nn.Module):
             base_activation=base_activation,
             grid_eps=grid_eps,
             grid_range=grid_range,
+            groups=groups,
         )
 
     def forward(self, x):
@@ -106,19 +106,23 @@ class ConvKAN(torch.nn.Module):
             dilation=self.dilation,
         )
 
+        batch_size, channels_and_elem, n_patches = x_unf.shape
+
         # Ensuring group separation is maintained in the input
-        x_unf = x_unf.view(
-            x.shape[0],  # batch size
-            self.groups,  # number of groups
-            self._in_dim,
-            # channels per group * kernel elements
-            -1,  # number of sliding window positions
+        x_unf = (
+            x_unf.permute(0, 2, 1)  # [B, H_out * W_out, channels * elems]
+            .reshape(
+                batch_size * n_patches, self.groups, channels_and_elem // self.groups
+            )  # [B * H_out * W_out, groups, out_channels // groups]
+            .permute(1, 0, 2)
+        )  # [groups, B * H_out * W_out, out_channels // groups]
+
+        output = self.kan_layer(
+            x_unf
+        )  # [groups, B * H_out * W_out, out_channels // groups]
+        output = (
+            output.permute(1, 0, 2).reshape(batch_size, n_patches, -1).permute(0, 2, 1)
         )
-
-        # Reshape for KANLinear which expects (batch_size * num_windows, features)
-        x_unf = x_unf.contiguous().view(-1, self._in_dim)
-
-        output = self.kan_layer(x_unf)
 
         # Compute output dimensions
         output_height = (
