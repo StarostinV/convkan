@@ -4,6 +4,14 @@
 
 The KAN implementation is taken from the https://github.com/Blealtan/efficient-kan/ repository.
 
+## Installation
+
+```bash
+git clone git@github.com:StarostinV/convkan.git
+cd convkan
+pip install .
+```
+
 ## Usage
 
 Training a simple model on MNIST (96% accuracy after the first epoch):
