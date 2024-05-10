@@ -11,6 +11,7 @@ class ConvKAN(torch.nn.Module):
                  kernel_size: int or tuple = 3,
                  stride: int = 1,
                  padding: int = 0,
+                 dilation: int = 1,
                  grid_size: int = 5,
                  spline_order: int = 3,
                  scale_noise: float = 0.1,
@@ -31,6 +32,7 @@ class ConvKAN(torch.nn.Module):
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
+        self.dilation = dilation
 
         self.kan_layer = KANLinear(
             in_dim * kernel_size[0] * kernel_size[1],
@@ -51,7 +53,9 @@ class ConvKAN(torch.nn.Module):
         batch_size, channels, height, width = x.shape
 
         # Apply unfold (im2col)
-        x_unf = F.unfold(x, kernel_size=self.kernel_size, padding=self.padding, stride=self.stride)
+        x_unf = F.unfold(
+            x, kernel_size=self.kernel_size, padding=self.padding, stride=self.stride, dilation=self.dilation,
+        )
         # x_unf.shape = (batch_size, channels * kernel_size * kernel_size, L), L is the number of resulting columns
 
         # Reshape for passing to the module
