@@ -5,11 +5,11 @@ import torch.nn as nn
 from torch import Tensor
 
 from convkan.convkan_layer import ConvKAN
+from convkan.kanlinear import KANLinear
 
 __all__ = [
     "KANResNet",
     "kan_resnet18",
-    "kan_resnet_nano",
 ]
 
 
@@ -35,9 +35,9 @@ def conv3x3(
     )
 
 
-def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
-    """1x1 convolution (does not seem to make sense to use KAN here)"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> ConvKAN:
+    """1x1 convolution"""
+    return ConvKAN(in_planes, out_planes, kernel_size=1, stride=stride)
 
 
 class BasicBlock(nn.Module):
@@ -178,7 +178,7 @@ class KANResNet(nn.Module):
             )
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(
+        self.conv1 = ConvKAN(
             3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
         )
         self.bn1 = norm_layer(self.inplanes)
@@ -198,9 +198,7 @@ class KANResNet(nn.Module):
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+            if isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
@@ -295,7 +293,3 @@ def _kan_resnet(
 
 def kan_resnet18(**kwargs: Any) -> KANResNet:
     return _kan_resnet(BasicBlock, [2, 2, 2, 2], **kwargs)
-
-
-def kan_resnet_nano(**kwargs: Any) -> KANResNet:
-    return _kan_resnet(BasicBlock, [2, 2], **kwargs)

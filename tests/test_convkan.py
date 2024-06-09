@@ -2,6 +2,7 @@ import pytest
 import torch
 from torch.nn import Conv2d
 from convkan import ConvKAN
+from convkan.kanresnet import kan_resnet18
 
 
 @pytest.fixture
@@ -145,3 +146,12 @@ def test_dtype_handling():
     assert (
             output.dtype == torch.double
     ), "Output dtype should match input dtype (double)."
+
+
+def test_resnet():
+    model = kan_resnet18()
+    model.eval()
+    with torch.no_grad():
+        x = torch.randn(1, 3, 128, 128)
+        out = model(x)
+    assert out.shape == (1, 1000), "Output shape is incorrect."
