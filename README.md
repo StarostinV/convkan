@@ -2,7 +2,7 @@
 
 ## Implementation of the Convolutional Kolmogorov-Arnold Network layer in PyTorch.
 
-A drop-in replacement for the torch.nn.Conv2d layer that uses the Kolmogorov-Arnold Network (KAN) instead of the standard convolution.
+A drop-in replacement for the torch.nn.Conv2d layer that uses the Kolmogorov-Arnold Network (KAN) as a convolutional kernel.
 
 Currently, supports grouped convolution, padding with different modes, dilation, and stride. 
 
