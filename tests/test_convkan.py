@@ -148,10 +148,9 @@ def test_dtype_handling():
     ), "Output dtype should match input dtype (double)."
 
 
-def test_resnet():
+def test_resnet(sample_input):
     model = kan_resnet18()
     model.eval()
     with torch.no_grad():
-        x = torch.randn(1, 3, 128, 128)
-        out = model(x)
+        out = model(sample_input)
     assert out.shape == (1, 1000), "Output shape is incorrect."
