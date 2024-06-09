@@ -1,5 +1,6 @@
 import pytest
 import torch
+from torch.nn import Conv2d
 from convkan import ConvKAN
 
 
@@ -10,33 +11,32 @@ def sample_input():
 
 
 @pytest.mark.parametrize(
-    "in_channels,out_channels,kernel_size,stride,padding,groups",
+    "in_channels,out_channels,kernel_size,stride,padding,groups,dilation",
     [
-        (3, 16, 3, 1, 1, 1),
-        (3, 32, (3, 5), (1, 2), (1, 0), 1),
-        (3, 18, 5, 1, 2, 1),
-        (3, 18, 5, 1, 1, 3),  # Testing grouped convolution
+        (3, 16, 3, 1, 1, 1, 2),
+        (3, 32, (3, 5), (1, 2), (1, 0), 1, 1),
+        (3, 18, 5, 1, 2, 1, (1, 2)),  # Testing dilation
+        (3, 18, 5, 1, 1, 3, 1),  # Testing grouped convolution
+        (3, 18, (3, 5), (2, 3), (1, 0), 3, (1, 2)),  # Mixed
+        (3, 16, (3, 5), 1, "same", 1, (1, 2)),  # Testing "same" padding mode
+        (3, 16, (3, 5), (2, 3), "valid", 1, (1, 2)),  # Testing "valid" padding mode
     ],
 )
 def test_conv_kan_forward_shape(
-    sample_input, in_channels, out_channels, kernel_size, stride, padding, groups
+        sample_input, in_channels, out_channels, kernel_size, stride, padding, groups, dilation
 ):
     model = ConvKAN(
-        in_channels, out_channels, kernel_size, stride, padding, groups=groups
+        in_channels, out_channels, kernel_size, stride, padding, groups=groups, dilation=dilation
     )
-    output = model(sample_input)
-    expected_height = (
-        sample_input.size(2) + 2 * model.padding[0] - model.kernel_size[0]
-    ) // model.stride[0] + 1
-    expected_width = (
-        sample_input.size(3) + 2 * model.padding[1] - model.kernel_size[1]
-    ) // model.stride[1] + 1
-    assert output.shape == (
-        2,
-        out_channels,
-        expected_height,
-        expected_width,
-    ), "Output shape is incorrect."
+
+    torch_model = Conv2d(
+        in_channels, out_channels, kernel_size, stride, padding, groups=groups, dilation=dilation
+    )
+
+    out1 = model(sample_input)
+    out2 = torch_model(sample_input)
+
+    assert out1.shape == out2.shape, "Output shape is incorrect."
 
 
 def test_invalid_groups():
@@ -100,7 +100,7 @@ def test_group_effect_on_output(in_channels, out_channels, groups, kernel_size):
     group_size = in_channels // groups
     group_to_modify = 1  # Let's modify the second group (0-indexed)
     modified_input[
-        :, group_size * group_to_modify : group_size * (group_to_modify + 1)
+    :, group_size * group_to_modify: group_size * (group_to_modify + 1)
     ] *= 2  # Scale the group's channels
 
     # Get outputs from the model
@@ -143,5 +143,5 @@ def test_dtype_handling():
     model.double()  # Set model to double precision
     output = model(inputs)
     assert (
-        output.dtype == torch.double
+            output.dtype == torch.double
     ), "Output dtype should match input dtype (double)."

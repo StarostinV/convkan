@@ -7,25 +7,25 @@ from convkan.kanlinear import KANLinear
 
 class ConvKAN(torch.nn.Module):
     def __init__(
-        self,
-        in_channels: int,
-        out_channels: int,
-        kernel_size: int or tuple = 3,
-        stride: int or tuple = 1,
-        padding: int or tuple = 0,
-        dilation: int or tuple = 1,
-        groups: int = 1,
-        padding_mode: str = "zeros",
-        bias: bool = True,
-        grid_size: int = 5,
-        spline_order: int = 3,
-        scale_noise: float = 0.1,
-        scale_base: float = 1.0,
-        scale_spline: float = 1.0,
-        enable_standalone_scale_spline: bool = True,
-        base_activation: torch.nn.Module = torch.nn.SiLU,
-        grid_eps: float = 0.02,
-        grid_range: tuple = (-1, 1),
+            self,
+            in_channels: int,
+            out_channels: int,
+            kernel_size: int or tuple = 3,
+            stride: int or tuple = 1,
+            padding: int or str = 0,
+            dilation: int or tuple = 1,
+            groups: int = 1,
+            padding_mode: str = "zeros",
+            bias: bool = True,
+            grid_size: int = 5,
+            spline_order: int = 3,
+            scale_noise: float = 0.1,
+            scale_base: float = 1.0,
+            scale_spline: float = 1.0,
+            enable_standalone_scale_spline: bool = True,
+            base_activation: torch.nn.Module = torch.nn.SiLU,
+            grid_eps: float = 0.02,
+            grid_range: tuple = (-1, 1),
     ):
         """
         Convolutional layer with KAN kernels. A drop-in replacement for torch.nn.Conv2d.
@@ -35,7 +35,7 @@ class ConvKAN(torch.nn.Module):
             out_channels (int): Number of channels produced by the convolution
             kernel_size (int or tuple): Size of the convolving kernel. Default: 3
             stride (int or tuple): Stride of the convolution. Default: 1
-            padding (int or tuple): Padding added to both sides of the input. Default: 0
+            padding (int, tuple, or str): Padding added to both sides of the input. Default: 0
             dilation (int or tuple): Spacing between kernel elements. Default: 1
             groups (int): Number of blocked connections from input channels to output channels. Default: 1
             padding_mode (str): Padding mode. Default: 'zeros'
@@ -55,13 +55,23 @@ class ConvKAN(torch.nn.Module):
         self.out_channels = out_channels
         self.kernel_size = _pair(kernel_size)
         self.stride = _pair(stride)
-        self.padding = _pair(padding)
+        self.padding = padding
         self.dilation = _pair(dilation)
         self.groups = groups
         self.padding_mode = padding_mode
 
+        if isinstance(padding, str):
+            if padding == "same":
+                self.padding = self._calculate_same_padding()
+            elif padding == "valid":
+                self.padding = (0, 0)
+            else:
+                raise ValueError(f"Invalid padding mode: {padding}")
+        else:
+            self.padding = _pair(padding)
+
         self._in_dim = (
-            (in_channels // groups) * self.kernel_size[0] * self.kernel_size[1]
+                (in_channels // groups) * self.kernel_size[0] * self.kernel_size[1]
         )
         self._reversed_padding_repeated_twice = tuple(
             x for x in reversed(self.padding) for _ in range(2)
@@ -126,17 +136,17 @@ class ConvKAN(torch.nn.Module):
 
         # Compute output dimensions
         output_height = (
-            x.shape[2]
-            + 2 * padding[0]
-            - self.dilation[0] * (self.kernel_size[0] - 1)
-            - 1
-        ) // self.stride[0] + 1
+                                x.shape[2]
+                                + 2 * padding[0]
+                                - self.dilation[0] * (self.kernel_size[0] - 1)
+                                - 1
+                        ) // self.stride[0] + 1
         output_width = (
-            x.shape[3]
-            + 2 * padding[1]
-            - self.dilation[1] * (self.kernel_size[1] - 1)
-            - 1
-        ) // self.stride[1] + 1
+                               x.shape[3]
+                               + 2 * padding[1]
+                               - self.dilation[1] * (self.kernel_size[1] - 1)
+                               - 1
+                       ) // self.stride[1] + 1
 
         # Reshape output to the expected output format
         output = output.view(
@@ -147,6 +157,13 @@ class ConvKAN(torch.nn.Module):
         )
 
         return output
+
+    def _calculate_same_padding(self):
+        padding = []
+        for i in range(2):
+            pad = self.dilation[i] * (self.kernel_size[i] - 1) // 2
+            padding.append(pad)
+        return tuple(padding)
 
 
 def _pair(x):
